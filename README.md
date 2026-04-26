@@ -294,6 +294,91 @@ Each training run writes:
 - `report.html` with inline SVG graphs.
 - `checkpoints/model_*.pt`, `meta_*.json`, and optimizer state.
 
+## Weights & Biases Live Monitoring
+
+Pretrain, SFT, preference, and RLVR scripts can stream the same metrics to Weights & Biases.
+
+First log in once:
+
+```bash
+wandb login
+```
+
+Then launch with `--wandb`:
+
+```bash
+python -m scripts.pretrain \
+  --text-only \
+  --init scratch \
+  --stage S1 \
+  --steps 1000 \
+  --seq-len 512 \
+  --batch-size 1 \
+  --total-batch-tokens 512 \
+  --device-type mps \
+  --out-dir ~/.cache/nanovlm/runs/qwen35_s1_mps \
+  --wandb \
+  --wandb-project nanovlm-pretrain \
+  --wandb-run qwen35-s1-mps-debug \
+  --log-every 5
+```
+
+Useful offline mode if you do not want to upload immediately:
+
+```bash
+python -m scripts.pretrain ... --wandb --wandb-mode offline
+```
+
+Metrics currently sent include:
+
+- `train_loss`
+- `lr`
+- `tokens_per_sec`
+- `grad_norm`
+- `docs_seen`
+- `tokens_seen`
+- preference metrics such as `dpo_margin`, `dpo_acc`
+- RL metrics such as `reward`, `pass_at_1`, `rl_kl`
+
+Stop a broken run automatically:
+
+```bash
+python -m scripts.pretrain \
+  --text-only \
+  --init scratch \
+  --stage S1 \
+  --steps 1000 \
+  --seq-len 512 \
+  --batch-size 1 \
+  --total-batch-tokens 512 \
+  --device-type mps \
+  --wandb \
+  --log-every 5 \
+  --max-loss 25 \
+  --early-stop-patience 20 \
+  --early-stop-min-delta 0.001
+```
+
+This stops if:
+
+- `train_loss` becomes NaN or inf,
+- `train_loss > --max-loss`,
+- `train_loss` does not improve by `--early-stop-min-delta` for `--early-stop-patience` logged checks.
+
+For RLVR, you can instead monitor reward:
+
+```bash
+python -m scripts.rlvr \
+  --init checkpoint \
+  --steps 500 \
+  --group-size 4 \
+  --device-type mps \
+  --wandb \
+  --early-stop-metric reward \
+  --early-stop-mode max \
+  --early-stop-patience 50
+```
+
 ## Practical Notes
 
 - MPS defaults to `float32` for stability. You can try `--dtype float16` after smoke tests pass.

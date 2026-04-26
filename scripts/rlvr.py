@@ -14,7 +14,7 @@ from nanovlm.train.engine import generate
 from nanovlm.train.losses import grpo_policy_loss, group_advantages
 from nanovlm.train.model_factory import build_model, load_tokenizer
 from nanovlm.train.optim import OptimConfig, build_optimizer, set_lr_and_wd
-from nanovlm.train.report import MetricsLogger, write_html_report
+from nanovlm.train.report import EarlyStopper, MetricsLogger, WandbLogger, add_monitoring_args, write_html_report
 from nanovlm.train.schedule import lr_multiplier
 from nanovlm.train.verifiers import reward_record
 
@@ -45,6 +45,7 @@ def main() -> None:
     p.add_argument("--max-new-tokens", type=int, default=32)
     p.add_argument("--temperature", type=float, default=1.0)
     p.add_argument("--kl-coef", type=float, default=0.0)
+    add_monitoring_args(p, default_project="nanovlm-rlvr")
     args = p.parse_args()
 
     ctx = init_runtime(args.device_type, args.dtype)
@@ -56,6 +57,23 @@ def main() -> None:
     optimizer = build_optimizer(model, OptimConfig(matrix_lr=0.003, adam_lr=3e-5, weight_decay=0.0))
     records = cycle_records(args.data) if args.data else _synthetic_rl_records()
     logger = MetricsLogger(args.out_dir, "rlvr")
+    wandb_logger = WandbLogger(
+        enabled=args.wandb,
+        project=args.wandb_project,
+        run_name=args.wandb_run,
+        entity=args.wandb_entity,
+        mode=args.wandb_mode,
+        config=vars(args),
+        out_dir=args.out_dir,
+        master=ctx.master,
+    )
+    early_stopper = EarlyStopper(
+        metric=args.early_stop_metric,
+        mode=args.early_stop_mode,
+        patience=args.early_stop_patience,
+        min_delta=args.early_stop_min_delta,
+        max_loss=args.max_loss,
+    )
     pad = eos_id(tokenizer)
 
     for step in range(args.steps):
@@ -89,11 +107,17 @@ def main() -> None:
         optimizer.step()
         metrics.update({"step": step, "reward": float(rewards.mean().cpu()), "train_loss": float(loss.detach().cpu()), "pass_at_1": float((rewards > 0).float().mean().cpu())})
         logger.log(**metrics)
+        wandb_logger.log(metrics)
         print0(f"step {step:05d} rl_loss={metrics['train_loss']:.4f} reward={metrics['reward']:.3f}")
+        if early_stopper.check(metrics):
+            print0(f"early stop at step {step}: {early_stopper.reason}")
+            break
 
     if ctx.master:
-        save_checkpoint(Path(args.out_dir) / "checkpoints", args.steps, model, optimizer, {"args": vars(args)}, rank=ctx.rank)
+        final_step = step + 1 if "step" in locals() else 0
+        save_checkpoint(Path(args.out_dir) / "checkpoints", final_step, model, optimizer, {"args": vars(args), "early_stop": early_stopper.reason}, rank=ctx.rank)
         print0(f"report: {write_html_report(args.out_dir)}")
+    wandb_logger.finish()
     cleanup_runtime()
 
 

@@ -12,7 +12,7 @@ from nanovlm.train.data import PreferenceLoader
 from nanovlm.train.losses import mpo_loss, sequence_logprobs
 from nanovlm.train.model_factory import build_model, load_tokenizer
 from nanovlm.train.optim import OptimConfig, build_optimizer, set_lr_and_wd
-from nanovlm.train.report import MetricsLogger, write_html_report
+from nanovlm.train.report import EarlyStopper, MetricsLogger, WandbLogger, add_monitoring_args, write_html_report
 from nanovlm.train.schedule import lr_multiplier
 
 
@@ -32,6 +32,7 @@ def main() -> None:
     p.add_argument("--beta", type=float, default=0.1)
     p.add_argument("--quality-weight", type=float, default=0.05)
     p.add_argument("--sft-weight", type=float, default=0.1)
+    add_monitoring_args(p, default_project="nanovlm-preference")
     args = p.parse_args()
 
     ctx = init_runtime(args.device_type, args.dtype)
@@ -43,6 +44,23 @@ def main() -> None:
     optimizer = build_optimizer(model, OptimConfig(matrix_lr=0.005, adam_lr=5e-5, weight_decay=0.0))
     loader = PreferenceLoader(tokenizer, args.data, args.batch_size, args.seq_len)
     logger = MetricsLogger(args.out_dir, "preference")
+    wandb_logger = WandbLogger(
+        enabled=args.wandb,
+        project=args.wandb_project,
+        run_name=args.wandb_run,
+        entity=args.wandb_entity,
+        mode=args.wandb_mode,
+        config=vars(args),
+        out_dir=args.out_dir,
+        master=ctx.master,
+    )
+    early_stopper = EarlyStopper(
+        metric=args.early_stop_metric,
+        mode=args.early_stop_mode,
+        patience=args.early_stop_patience,
+        min_delta=args.early_stop_min_delta,
+        max_loss=args.max_loss,
+    )
 
     for step in range(args.steps):
         raw = next(loader)
@@ -67,11 +85,17 @@ def main() -> None:
         optimizer.step()
         metrics.update({"step": step, "train_loss": float(loss.detach().cpu())})
         logger.log(**metrics)
+        wandb_logger.log(metrics)
         print0(f"step {step:05d} pref_loss={metrics['train_loss']:.4f} margin={metrics['dpo_margin']:.3f}")
+        if early_stopper.check(metrics):
+            print0(f"early stop at step {step}: {early_stopper.reason}")
+            break
 
     if ctx.master:
-        save_checkpoint(Path(args.out_dir) / "checkpoints", args.steps, model, optimizer, {"args": vars(args)}, rank=ctx.rank)
+        final_step = step + 1 if "step" in locals() else 0
+        save_checkpoint(Path(args.out_dir) / "checkpoints", final_step, model, optimizer, {"args": vars(args), "early_stop": early_stopper.reason}, rank=ctx.rank)
         print0(f"report: {write_html_report(args.out_dir)}")
+    wandb_logger.finish()
     cleanup_runtime()
 
 
