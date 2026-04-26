@@ -29,6 +29,7 @@ from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from .attention import Qwen3_5Attention
 from .cache import HybridCache
@@ -36,6 +37,33 @@ from .config import Qwen3_5TextConfig
 from .layers import RMSNorm, SwiGLUMLP
 from .linear_attention import Qwen3_5GatedDeltaNet
 from .rotary import TextRotaryEmbedding
+
+
+def _causal_lm_loss(
+    logits: torch.Tensor,
+    labels: Optional[torch.Tensor],
+    loss_mask: Optional[torch.Tensor] = None,
+    *,
+    ignore_index: int = -100,
+) -> Optional[torch.Tensor]:
+    """Cross-entropy over already-aligned next-token labels.
+
+    Training loaders in this repo emit ``inputs[:, t] -> labels[:, t]`` where
+    ``labels`` already contains the next token or an ignore id. This helper
+    intentionally does not shift internally.
+    """
+    if labels is None:
+        return None
+    labels = labels.to(device=logits.device, dtype=torch.long)
+    labels = labels.clone()
+    labels[labels == -1] = ignore_index
+    if loss_mask is not None:
+        labels = labels.masked_fill(loss_mask.to(device=logits.device) == 0, ignore_index)
+    return F.cross_entropy(
+        logits.reshape(-1, logits.size(-1)).float(),
+        labels.reshape(-1),
+        ignore_index=ignore_index,
+    )
 
 
 def _build_causal_mask(
@@ -208,6 +236,8 @@ class Qwen3_5TextModel(nn.Module):
         position_ids: Optional[torch.LongTensor] = None,
         past_key_values: Optional[HybridCache] = None,
         inputs_embeds: Optional[torch.Tensor] = None,
+        labels: Optional[torch.Tensor] = None,
+        loss_mask: Optional[torch.Tensor] = None,
         use_cache: bool = False,
     ) -> dict:
         r"""Run one forward pass over ``input_ids`` (or ``inputs_embeds``).
@@ -330,6 +360,8 @@ class Qwen3_5ForCausalLM(nn.Module):
         position_ids: Optional[torch.LongTensor] = None,
         past_key_values: Optional[HybridCache] = None,
         inputs_embeds: Optional[torch.Tensor] = None,
+        labels: Optional[torch.Tensor] = None,
+        loss_mask: Optional[torch.Tensor] = None,
         use_cache: bool = False,
     ) -> dict:
         out = self.model(
@@ -343,8 +375,10 @@ class Qwen3_5ForCausalLM(nn.Module):
         hidden_states = out["last_hidden_state"]
         # Logits: y · W_lm^T
         logits = self.lm_head(hidden_states)
+        loss = _causal_lm_loss(logits, labels, loss_mask)
         return {
             "logits": logits,
+            "loss": loss,
             "last_hidden_state": hidden_states,
             "past_key_values": out["past_key_values"],
         }

@@ -31,7 +31,7 @@ import torch.nn as nn
 
 from .cache import HybridCache
 from .config import Qwen3_5Config
-from .decoder import Qwen3_5TextModel
+from .decoder import Qwen3_5TextModel, _causal_lm_loss
 from .vision import Qwen3_5VisionModel
 
 
@@ -337,6 +337,8 @@ class Qwen3_5Model(nn.Module):
         image_grid_thw: Optional[torch.LongTensor] = None,
         video_grid_thw: Optional[torch.LongTensor] = None,
         mm_token_type_ids: Optional[torch.IntTensor] = None,
+        labels: Optional[torch.Tensor] = None,
+        loss_mask: Optional[torch.Tensor] = None,
         use_cache: bool = False,
     ) -> dict:
         r"""End-to-end multimodal forward pass.
@@ -428,6 +430,8 @@ class Qwen3_5ForConditionalGeneration(nn.Module):
         image_grid_thw: Optional[torch.LongTensor] = None,
         video_grid_thw: Optional[torch.LongTensor] = None,
         mm_token_type_ids: Optional[torch.IntTensor] = None,
+        labels: Optional[torch.Tensor] = None,
+        loss_mask: Optional[torch.Tensor] = None,
         use_cache: bool = False,
     ) -> dict:
         out = self.model(
@@ -445,8 +449,10 @@ class Qwen3_5ForConditionalGeneration(nn.Module):
         )
         hidden_states = out["last_hidden_state"]
         logits = self.lm_head(hidden_states)
+        loss = _causal_lm_loss(logits, labels, loss_mask)
         return {
             "logits": logits,
+            "loss": loss,
             "last_hidden_state": hidden_states,
             "past_key_values": out["past_key_values"],
             "rope_deltas": out.get("rope_deltas"),

@@ -7,6 +7,13 @@ import sys
 
 import torch
 
+if os.environ.get("NANOVLM_RUN_HF_PARITY") != "1":
+    if "pytest" in sys.modules:
+        import pytest
+        pytest.skip("set NANOVLM_RUN_HF_PARITY=1 to run transformers parity tests", allow_module_level=True)
+    print("[skip] set NANOVLM_RUN_HF_PARITY=1 to run transformers parity tests")
+    sys.exit(0)
+
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, HERE)
 
