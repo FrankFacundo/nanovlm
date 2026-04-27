@@ -1,0 +1,12 @@
+name: preference_multimodal
+seq_len: 2048
+batch_size: 1
+sources:
+  - name: mmpr_v12
+    weight: 0.6
+    format: parquet
+    glob: "vlm-pref/mmpr_v12/*.parquet"
+  - name: rlaif_v
+    weight: 0.4
+    format: parquet
+    glob: "vlm-pref/rlaif_v/*.parquet"

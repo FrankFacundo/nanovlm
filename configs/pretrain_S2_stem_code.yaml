@@ -1,0 +1,24 @@
+name: pretrain_S2_stem_code
+seq_len: 4096
+batch_size: 1
+sources:
+  - name: finemath_4plus
+    weight: 0.30
+    format: parquet
+    glob: "math-pretrain/finemath_4plus/*.parquet"
+  - name: megamath
+    weight: 0.20
+    format: parquet
+    glob: "math-pretrain/megamath/*.parquet"
+  - name: nemotron_cc_math
+    weight: 0.15
+    format: parquet
+    glob: "math-pretrain/nemotron_cc_math/*.parquet"
+  - name: stack_edu
+    weight: 0.30
+    format: parquet
+    glob: "code-pretrain/stack_edu/*.parquet"
+  - name: pes2o
+    weight: 0.05
+    format: parquet
+    glob: "text-pretrain/pes2o/*.parquet"

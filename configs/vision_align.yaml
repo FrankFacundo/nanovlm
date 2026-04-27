@@ -1,0 +1,18 @@
+name: vision_align
+seq_len: 1024
+batch_size: 1
+freeze_lm: true
+unfreeze_projector: true
+sources:
+  - name: pixmo_cap
+    weight: 0.50
+    format: parquet
+    glob: "vlm-pretrain/pixmo_cap/*.parquet"
+  - name: recap_datacomp
+    weight: 0.30
+    format: parquet
+    glob: "vlm-pretrain/recap_datacomp/*.parquet"
+  - name: pixelprose
+    weight: 0.20
+    format: parquet
+    glob: "vlm-pretrain/pixelprose/*.parquet"

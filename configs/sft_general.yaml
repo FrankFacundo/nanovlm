@@ -1,0 +1,33 @@
+name: sft_general
+seq_len: 2048
+batch_size: 1
+thinking_ratio: 0.25
+sources:
+  - name: tulu3_sft
+    weight: 0.35
+    format: parquet
+    glob: "sft-text/tulu3_sft/*.parquet"
+  - name: smoltalk
+    weight: 0.15
+    format: parquet
+    glob: "sft-text/smoltalk/*.parquet"
+  - name: oasst1
+    weight: 0.05
+    format: parquet
+    glob: "sft-text/oasst1/*.parquet"
+  - name: aya
+    weight: 0.05
+    format: parquet
+    glob: "sft-text/aya/*.parquet"
+  - name: openmathinstruct2
+    weight: 0.15
+    format: parquet
+    glob: "sft-text/openmathinstruct2/*.parquet"
+  - name: opencodereasoning
+    weight: 0.10
+    format: parquet
+    glob: "sft-text/opencodereasoning/*.parquet"
+  - name: cambrian7m
+    weight: 0.15
+    format: parquet
+    glob: "vlm-sft/cambrian7m/*.parquet"
