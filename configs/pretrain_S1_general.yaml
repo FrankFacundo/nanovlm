@@ -1,0 +1,24 @@
+name: pretrain_S1_general
+seq_len: 4096
+batch_size: 1
+sources:
+  - name: fineweb_edu
+    weight: 0.50
+    format: parquet
+    glob: "text-pretrain/fineweb_edu/*.parquet"
+  - name: dclm_baseline
+    weight: 0.25
+    format: parquet
+    glob: "text-pretrain/dclm_baseline/*.parquet"
+  - name: fineweb2_eng
+    weight: 0.10
+    format: parquet
+    glob: "text-pretrain/fineweb2_eng/*.parquet"
+  - name: stack_edu
+    weight: 0.10
+    format: parquet
+    glob: "code-pretrain/stack_edu/*.parquet"
+  - name: pes2o
+    weight: 0.05
+    format: parquet
+    glob: "text-pretrain/pes2o/*.parquet"

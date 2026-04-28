@@ -1,2 +1,27 @@
 **/.DS_Store
-**/**.pyc
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+*.egg-info/
+.pytest_cache/
+.cache/
+.venv/
+venv/
+
+# Run + data caches
+runs/local/
+data/local/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Generated reports / artifacts (do not commit checkpoints / data)
+checkpoints/
+trajectories/
+manifest.json
+
+# Keep the existing inference docs and image
+!inference/qwen3_5-0_8B/docs/**
+!inference/qwen3_5-0_8B/image.png

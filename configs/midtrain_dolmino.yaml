@@ -1,0 +1,24 @@
+name: midtrain_dolmino
+seq_len: 4096
+batch_size: 1
+sources:
+  - name: fineweb_edu_high
+    weight: 0.40
+    format: parquet
+    glob: "text-pretrain/fineweb_edu/*.parquet"
+  - name: finemath_4plus
+    weight: 0.25
+    format: parquet
+    glob: "math-pretrain/finemath_4plus/*.parquet"
+  - name: openmathinstruct2
+    weight: 0.10
+    format: parquet
+    glob: "sft-text/openmathinstruct2/*.parquet"
+  - name: magicoder_oss
+    weight: 0.10
+    format: parquet
+    glob: "code-pretrain/magicoder_oss/*.parquet"
+  - name: tulu3_sft
+    weight: 0.15
+    format: parquet
+    glob: "sft-text/tulu3_sft/*.parquet"

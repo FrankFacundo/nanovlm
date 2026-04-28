@@ -1,0 +1,12 @@
+name: preference_text
+seq_len: 2048
+batch_size: 1
+sources:
+  - name: ultrafeedback_clean
+    weight: 0.6
+    format: parquet
+    glob: "preference-text/ultrafeedback_clean/*.parquet"
+  - name: helpsteer3
+    weight: 0.4
+    format: parquet
+    glob: "preference-text/helpsteer3/*.parquet"

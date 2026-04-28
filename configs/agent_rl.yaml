@@ -1,0 +1,23 @@
+name: agent_rl
+seq_len: 2048
+group_size: 4
+max_turns: 8
+tools:
+  - python
+  - filesystem
+  - web_search
+  - browser
+  - image_ops
+sources:
+  - name: dapo_math_17k
+    weight: 0.4
+    format: parquet
+    glob: "rlvr/dapo_math_17k/*.parquet"
+  - name: rlvr_mixed
+    weight: 0.3
+    format: parquet
+    glob: "rlvr/rlvr_mixed/*.parquet"
+  - name: opencodereasoning
+    weight: 0.3
+    format: parquet
+    glob: "sft-text/opencodereasoning/*.parquet"

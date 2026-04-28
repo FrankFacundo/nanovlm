@@ -1,0 +1,16 @@
+name: pretrain_S3_long_context
+seq_len: 16384
+batch_size: 1
+sources:
+  - name: pes2o
+    weight: 0.50
+    format: parquet
+    glob: "text-pretrain/pes2o/*.parquet"
+  - name: fineweb_edu
+    weight: 0.30
+    format: parquet
+    glob: "text-pretrain/fineweb_edu/*.parquet"
+  - name: stack_edu
+    weight: 0.20
+    format: parquet
+    glob: "code-pretrain/stack_edu/*.parquet"

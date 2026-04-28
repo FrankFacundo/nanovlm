@@ -1,0 +1,12 @@
+name: rlvr_math_if
+seq_len: 1024
+group_size: 8
+sources:
+  - name: rlvr_mixed
+    weight: 0.7
+    format: parquet
+    glob: "rlvr/rlvr_mixed/*.parquet"
+  - name: dapo_math_17k
+    weight: 0.3
+    format: parquet
+    glob: "rlvr/dapo_math_17k/*.parquet"
