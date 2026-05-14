@@ -1,0 +1,3 @@
+{"text": "NanoVLM debug pretraining sample about patch embeddings and language tokens."}
+{"text": "A tiny optimizer step checks loss masking and packed batches."}
+{"text": "Stage debugging uses small local JSONL records instead of downloaded parquet shards."}

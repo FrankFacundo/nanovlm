@@ -1,0 +1,2 @@
+{"image": "debug.ppm", "text": "A small colored checker pattern."}
+{"messages": [{"role": "user", "content": [{"type": "image", "path": "debug.ppm"}, {"type": "text", "text": "Describe the image briefly."}]}, {"role": "assistant", "content": "It is a small colored checker pattern."}]}

@@ -47,7 +47,7 @@ def tiny_config(vocab_size: int = 248320) -> Qwen3_5Config:
         num_heads=2,
         out_hidden_size=text.hidden_size,
         patch_size=16,
-        temporal_patch_size=1,
+        temporal_patch_size=2,
         spatial_merge_size=2,
     )
     return Qwen3_5Config(text_config=text, vision_config=vision, tie_word_embeddings=True)

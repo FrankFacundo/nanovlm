@@ -14,7 +14,8 @@ data/local/
 
 # IDE
 .idea/
-.vscode/
+.vscode/*
+!.vscode/launch.json
 *.swp
 
 # Generated reports / artifacts (do not commit checkpoints / data)

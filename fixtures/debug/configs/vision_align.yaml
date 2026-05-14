@@ -1,0 +1,8 @@
+name: debug_vision_align
+seq_len: 128
+batch_size: 1
+sources:
+  - name: debug_vlm_align
+    weight: 1.0
+    format: jsonl
+    glob: "vlm/align.jsonl"

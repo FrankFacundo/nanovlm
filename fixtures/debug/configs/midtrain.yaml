@@ -1,0 +1,8 @@
+name: debug_midtrain
+seq_len: 64
+batch_size: 1
+sources:
+  - name: debug_text
+    weight: 1.0
+    format: jsonl
+    glob: "text/train.jsonl"

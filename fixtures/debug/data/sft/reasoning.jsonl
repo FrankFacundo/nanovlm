@@ -1,0 +1,2 @@
+{"prompt": "What is 3 plus 5?", "thinking": "Add 3 and 5 to get 8.", "response": "8"}
+{"messages": [{"role": "user", "content": "Compute 6 times 7."}, {"role": "assistant", "thinking": "Multiplication gives 42.", "content": "42"}]}
